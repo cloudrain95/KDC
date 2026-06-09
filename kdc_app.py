@@ -1142,7 +1142,7 @@ def fetch_naru_batch(books, max_workers=5):
             try:
                 results[isbn] = future.result()
             except Exception:
-                results[isbn] = {"isbn": isbn, "kdc_list": [], "keywords": []}
+                results[isbn] = {"isbn": isbn, "kdc_list": [], "keywords": [], "subjects": []}
     return results
 
 def analyze_kdc(books, naru_results):
@@ -1156,6 +1156,7 @@ def analyze_kdc(books, naru_results):
         naru_kdc_list = naru.get("kdc_list",[])
         naru_kdcs.extend(naru_kdc_list)
         all_keywords.extend(naru.get("keywords",[]))
+        all_keywords.extend(naru.get("subjects",[]))
         rep_kdc = naru_kdc_list[0] if naru_kdc_list else nl_kdc
         if rep_kdc:
             # 키워드 + 주제명 합치기 (중복 제거)
@@ -1399,7 +1400,7 @@ if run_btn and user_input.strip():
     # 키워드 요약
     if analysis["all_keywords"]:
         st.divider()
-        st.subheader("🏷 전국 도서관 키워드")
+        st.subheader("🏷 전국 도서관 키워드 · 주제명")
         kw_text = "  ".join([f"`{k}`" for k in analysis["all_keywords"][:20]])
         st.markdown(kw_text)
 
