@@ -1187,7 +1187,7 @@ def analyze_kdc(books, naru_results):
 
 def predict_claude(keywords_str, analysis):
     if not ANTHROPIC_API_KEY:
-        return None
+        return None, "API 키 없음"
     kdc_dist = "\n".join([
         f"  KDC {kdc} {get_kdc_name(kdc)}: {cnt}건"
         for kdc, cnt in analysis["kdc_counter"].most_common(10)
@@ -1242,10 +1242,12 @@ KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세�
             timeout=30
         )
         data = resp.json()
+        if "error" in data:
+            return None, data["error"].get("message", "알 수 없는 오류")
         text = "".join(c.get("text","") for c in data.get("content",[]))
-        return text.strip() if text else None
-    except Exception:
-        return None
+        return (text.strip(), None) if text else (None, "응답 없음")
+    except Exception as e:
+        return None, str(e)
 
 def predict_builtin(keywords_str, analysis):
     kdc_counter = analysis["kdc_counter"]
@@ -1352,9 +1354,11 @@ if run_btn and user_input.strip():
         st.subheader("🎯 KDC 분류기호 예측 결과")
 
         with st.spinner("🤖 AI 분류기호 예측 중..."):
-            prediction = predict_claude(keywords_str, analysis)
+            prediction, claude_error = predict_claude(keywords_str, analysis)
             method = "Claude AI"
             if not prediction:
+                if claude_error:
+                    st.warning(f"⚠ Claude AI 오류: {claude_error}")
                 prediction = predict_builtin(keywords_str, analysis)
                 method = "내장 지침"
 
