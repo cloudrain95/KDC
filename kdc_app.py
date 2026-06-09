@@ -1314,7 +1314,7 @@ if run_btn and user_input.strip():
 
     # STEP 2
     with st.spinner(f"📡 정보나루 전국 도서관 데이터 수집 중... (ISBN {len([b for b in books if b.get('isbn')])}건)"):
-        naru_results = fetch_naru_batch(books, max_workers=5)
+        naru_results = fetch_naru_batch(books, max_workers=10)
 
     # STEP 3
     with st.spinner("📊 KDC 분포 분석 중..."):
