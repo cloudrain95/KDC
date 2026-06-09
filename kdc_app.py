@@ -1225,11 +1225,7 @@ def predict_claude(keywords_str, analysis):
 
 [해설]
 분류 원칙 및 주주제 판정 근거를 3~5문장으로 설명하세요.
-KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세요.
-
-각 순위의 근거에는 반드시 다음을 포함하세요:
-1. 해당 KDC로 분류된 관련 도서 제목 1~2개 언급
-2. 전국 도서관 키워드 중 해당 분류를 뒷받침하는 키워드 언급"""
+KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세요."""
     try:
         resp = requests.post(
             "https://api.anthropic.com/v1/messages",
