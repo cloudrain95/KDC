@@ -1060,9 +1060,11 @@ def search_nl_keywords(keywords_str, page_size=30):
         return [], "0"
 
 def fetch_naru_one(isbn):
-    result = {"isbn": isbn, "kdc_list": [], "keywords": []}
+    result = {"isbn": isbn, "kdc_list": [], "keywords": [], "subjects": []}
     if not isbn:
         return result
+
+    # 정보나루 도서상세조회 (KDC)
     try:
         resp = requests.get(
             "http://data4library.kr/api/srchDtlList",
@@ -1076,6 +1078,8 @@ def fetch_naru_one(isbn):
                 result["kdc_list"].append(kdc)
     except Exception:
         pass
+
+    # 정보나루 키워드목록
     try:
         resp = requests.get(
             "http://data4library.kr/api/keywordList",
@@ -1087,6 +1091,43 @@ def fetch_naru_one(isbn):
                                for k in items if k.get("item",{}).get("word")]
     except Exception:
         pass
+
+    # 공공데이터포털 서지정보 → 주제 URI 수집
+    try:
+        resp = requests.get(
+            "https://apis.data.go.kr/1371029/BookInformationService_v2/getbookList_v2",
+            params={"serviceKey": API_DATA4GOV, "numOfRows": "1",
+                    "pageNo": "1", "isbn": isbn.replace("-","")},
+            headers=HEADERS, timeout=15)
+        resp.encoding = "utf-8"
+        root = ET.fromstring(resp.text)
+        subject_uris = []
+        for item in root.findall(".//item"):
+            for subj in item.findall("DCTERMS_subject"):
+                uri = subj.text.strip() if subj.text else ""
+                if uri:
+                    subject_uris.append(uri)
+
+        # 주제 URI → 주제명 변환
+        for uri in subject_uris[:3]:
+            subject_id = uri.split("/")[-1]
+            try:
+                r2 = requests.get(
+                    "https://apis.data.go.kr/1371029/SubjectInformationService/getSubjectList",
+                    params={"serviceKey": API_DATA4GOV, "numOfRows": "1",
+                            "pageNo": "1", "subjectId": subject_id},
+                    headers=HEADERS, timeout=10)
+                r2.encoding = "utf-8"
+                root2 = ET.fromstring(r2.text)
+                for it in root2.findall(".//item"):
+                    label = it.findtext("RDFS_label", "").strip()
+                    if label:
+                        result["subjects"].append(label)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     return result
 
 def fetch_naru_batch(books, max_workers=5):
@@ -1117,12 +1158,20 @@ def analyze_kdc(books, naru_results):
         all_keywords.extend(naru.get("keywords",[]))
         rep_kdc = naru_kdc_list[0] if naru_kdc_list else nl_kdc
         if rep_kdc:
+            # 키워드 + 주제명 합치기 (중복 제거)
+            combined = naru.get("keywords",[]) + naru.get("subjects",[])
+            seen = set()
+            merged = []
+            for w in combined:
+                if w and w not in seen:
+                    seen.add(w)
+                    merged.append(w)
             book_summary.append({
                 "title":    book["title"],
                 "kdc":      rep_kdc,
                 "kdc_name": get_kdc_name(rep_kdc),
                 "source":   "정보나루" if naru_kdc_list else "국중",
-                "keywords": naru.get("keywords",[])[:5],
+                "keywords": merged[:8],
             })
     def normalize(kdc):
         return kdc[:3] if len(kdc) >= 3 else kdc
@@ -1295,7 +1344,7 @@ if run_btn and user_input.strip():
             with st.expander(f"{b['title'][:40]}"):
                 st.markdown(f"**KDC:** {b['kdc']} {b['kdc_name']} `[{b['source']}]`")
                 if b["keywords"]:
-                    st.markdown(f"**키워드:** {', '.join(b['keywords'][:5])}")
+                    st.markdown(f"**키워드·주제명:** {', '.join(b['keywords'][:8])}")
 
     with right:
         # KDC 예측
