@@ -1197,6 +1197,67 @@ KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세�
     except Exception:
         return None
 
+def predict_web(keywords_str, analysis):
+    """방법 B: 실시간 웹 검색 기반 해설"""
+    if not analysis["kdc_counter"]:
+        return None
+
+    top3  = analysis["kdc_counter"].most_common(3)
+    total = analysis["total_kdc_count"]
+    kdc1  = top3[0][0]
+    name1 = get_kdc_name(kdc1)
+
+    # 웹 검색: KDC 번호로 분류 지침 검색
+    search_results = []
+    queries = [
+        f"KDC {kdc1} {name1} 분류 원칙 한국십진분류법",
+        f"KDC {kdc1} 분류 기준 사서 실무",
+    ]
+    for query in queries[:1]:
+        try:
+            resp = requests.get(
+                "https://api.duckduckgo.com/",
+                params={"q": query, "format": "json",
+                        "no_html": "1", "skip_disambig": "1"},
+                headers=HEADERS, timeout=10)
+            data = resp.json()
+            abstract = data.get("AbstractText", "")
+            if abstract:
+                search_results.append(abstract[:300])
+            for topic in data.get("RelatedTopics", [])[:2]:
+                text = topic.get("Text", "")
+                if text and len(text) > 20:
+                    search_results.append(text[:200])
+        except Exception:
+            pass
+
+    # 순위 구성
+    lines = []
+    medals = ["1순위","2순위","3순위"]
+    for i, (kdc, cnt) in enumerate(top3):
+        name = get_kdc_name(kdc)
+        pct  = round(cnt / total * 100, 1) if total else 0
+        lines.append(f"[{medals[i]}] KDC {kdc} ({name}) — 관련 도서 {cnt}건 ({pct}%)")
+
+    lines.append("")
+    lines.append("[해설]")
+    lines.append(f"입력 키워드 '{keywords_str}'와 관련된 도서 {total}건을 분석한 결과,")
+    lines.append(f"KDC {kdc1}({name1})이 가장 많이 분류된 번호입니다.")
+
+    if search_results:
+        lines.append("")
+        lines.append("📡 웹 검색 참고 정보:")
+        for r in search_results[:2]:
+            lines.append(f"  {r}")
+    else:
+        lines.append("(웹 검색 결과 없음 — KDC 분류 지침 직접 확인 권장)")
+
+    lines.append("")
+    lines.append("※ 다주제 저작은 주주제를 우선하는 원칙을 적용합니다.")
+    lines.append("※ 최종 분류 전 목차·내용 직접 확인을 권장합니다.")
+    return "\n".join(lines)
+
+
 def predict_builtin(keywords_str, analysis):
     kdc_counter = analysis["kdc_counter"]
     if not kdc_counter:
@@ -1304,6 +1365,9 @@ if run_btn and user_input.strip():
         with st.spinner("🤖 AI 분류기호 예측 중..."):
             prediction = predict_claude(keywords_str, analysis)
             method = "Claude AI"
+            if not prediction:
+                prediction = predict_web(keywords_str, analysis)
+                method = "웹 검색"
             if not prediction:
                 prediction = predict_builtin(keywords_str, analysis)
                 method = "내장 지침"
