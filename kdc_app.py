@@ -1236,7 +1236,7 @@ KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세�
                 "anthropic-version": "2023-06-01"
             },
             json={
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-4-5",
                 "max_tokens": 1200,
                 "messages": [{"role": "user", "content": prompt}]
             },
