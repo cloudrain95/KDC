@@ -1019,7 +1019,7 @@ def safe_get(url, params, timeout=20):
                 raise
 
 # ── API 함수들 ───────────────────────────────────────────────
-def search_nl_keywords(keywords_str, page_size=30):
+def search_nl_keywords(keywords_str, page_size=50):
     keywords = [k.strip() for k in keywords_str.split("&") if k.strip()]
     if not keywords:
         return []
@@ -1305,7 +1305,7 @@ if run_btn and user_input.strip():
 
     # STEP 1
     with st.spinner("📖 국립중앙도서관 소장자료 검색 중..."):
-        books, total = search_nl_keywords(keywords_str, page_size=30)
+        books, total = search_nl_keywords(keywords_str, page_size=50)
 
     if not books:
         st.error("관련 도서를 찾을 수 없습니다. 키워드를 바꿔 보세요.")
