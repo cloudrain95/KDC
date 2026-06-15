@@ -1235,7 +1235,7 @@ KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세�
                 "anthropic-version": "2023-06-01"
             },
             json={
-                "model": "claude-sonnet-4-5",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": 1200,
                 "messages": [{"role": "user", "content": prompt}]
             },
@@ -1304,7 +1304,7 @@ if run_btn and user_input.strip():
 
     # STEP 1
     with st.spinner("📖 국립중앙도서관 소장자료 검색 중..."):
-        books, total = search_nl_keywords(keywords_str, page_size=30)
+        books, total = search_nl_keywords(keywords_str, page_size=50)
 
     if not books:
         st.error("관련 도서를 찾을 수 없습니다. 키워드를 바꿔 보세요.")
