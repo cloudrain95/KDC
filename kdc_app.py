@@ -1225,7 +1225,8 @@ def predict_claude(keywords_str, analysis):
 
 [해설]
 분류 원칙 및 주주제 판정 근거를 3~5문장으로 설명하세요.
-KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세요."""
+KDC 6판 적용 기준과 학생 비교 학습을 위한 설명을 포함하세요.
+반드시 완전한 문장으로 작성하세요. 줄임형이나 개조식은 사용하지 마세요."""
     try:
         resp = requests.post(
             "https://api.anthropic.com/v1/messages",
