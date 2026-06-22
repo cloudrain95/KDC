@@ -1439,3 +1439,5 @@ with st.sidebar:
     st.code("진로 & 직업 & 성공")
     st.code("인공지능 & 윤리")
     st.code("한국문학 & 현대소설")
+    st.divider()
+    st.caption("개발: 이운우 (cloudrain95@naver.com)")
